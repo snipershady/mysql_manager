@@ -1,0 +1,40 @@
+# Build output
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Credenziali e configurazioni locali
+src/main/resources/application-local.properties
+application-local.properties
+*.env
+.env
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.eclipse
+.project
+.classpath
+.settings/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
+logs/
+
+# Claude Code (metadati interni, non utili al progetto)
+.claude/
+CLAUDE.md

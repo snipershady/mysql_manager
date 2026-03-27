@@ -1,0 +1,24 @@
+# Normalizza i fine riga su LF nel repository
+* text=auto eol=lf
+
+# File binari — nessuna conversione
+*.jar binary
+*.war binary
+*.ear binary
+*.class binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+
+# Escludi dalla export (git archive) i file non necessari alla distribuzione del sorgente
+target/ export-ignore
+*.jar export-ignore
+*.war export-ignore
+*.class export-ignore
+.claude/ export-ignore
+CLAUDE.md export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
