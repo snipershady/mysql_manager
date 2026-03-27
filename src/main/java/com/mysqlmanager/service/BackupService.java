@@ -70,9 +70,9 @@ public class BackupService {
                 "--routines",
                 "--events",
                 "--single-transaction",
-                "--add-drop-database",
+                "--add-drop-table",
                 "--set-gtid-purged=OFF",
-                "--databases", database
+                database
         );
         pb.environment().put("MYSQL_PWD", password);
 
@@ -118,15 +118,22 @@ public class BackupService {
             throw new IOException("File di backup non trovato: " + filename);
         }
 
+        // Ricava il database sorgente dal nome del file (es. db_prova_2026-03-27_17-10-01.sql.gz)
+        Matcher m = BACKUP_PATTERN.matcher(filename);
+        String sourceDatabase = m.matches() ? m.group(1) : database;
+
         // Backup di sicurezza del database corrente prima di sovrascrivere
         String safetyBackupPath = backup(database);
 
-        // Ripristino: decomprimi e invia allo stdin di mysql
+        // Ripristino: specifica il database di destinazione esplicitamente con -D.
+        // --no-defaults evita che eventuali file .my.cnf sovrascrivano il database di destinazione.
         ProcessBuilder pb = new ProcessBuilder(
                 mysqlBin,
+                "--no-defaults",
                 "-h", host,
                 "-P", String.valueOf(port),
-                "-u", user
+                "-u", user,
+                "-D", database
         );
         pb.environment().put("MYSQL_PWD", password);
 
@@ -139,7 +146,20 @@ public class BackupService {
 
         try (GZIPInputStream gz = new GZIPInputStream(Files.newInputStream(backupFile));
              OutputStream stdin = process.getOutputStream()) {
-            gz.transferTo(stdin);
+            if (!sourceDatabase.equals(database)) {
+                // Cross-db: forza il database di destinazione come prima istruzione,
+                // poi invia il dump (i nuovi backup non hanno USE; quelli vecchi
+                // vengono corretti da rewriteDump)
+                byte[] useTarget = ("USE `" + database + "`;\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                stdin.write(useTarget);
+                if (dumpContainsUseStatement(backupFile, sourceDatabase)) {
+                    rewriteDump(gz, stdin, sourceDatabase, database);
+                } else {
+                    gz.transferTo(stdin);
+                }
+            } else {
+                gz.transferTo(stdin);
+            }
         }
 
         int exitCode = process.waitFor();
@@ -150,6 +170,51 @@ public class BackupService {
         }
 
         return safetyBackupPath;
+    }
+
+    /**
+     * Controlla se il dump (già compresso) contiene un'istruzione USE `sourceDb`.
+     * Legge solo i primi 32 KB decompressi per non caricare tutto in memoria.
+     */
+    private boolean dumpContainsUseStatement(Path backupFile, String sourceDb) throws IOException {
+        byte[] needle = ("USE `" + sourceDb + "`").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        try (GZIPInputStream gz = new GZIPInputStream(Files.newInputStream(backupFile))) {
+            byte[] header = gz.readNBytes(32768);
+            outer:
+            for (int i = 0; i <= header.length - needle.length; i++) {
+                for (int j = 0; j < needle.length; j++) {
+                    if (header[i + j] != needle[j]) continue outer;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Usato solo per dump vecchi (generati con --databases) che contengono
+     * USE `source`, CREATE DATABASE e DROP DATABASE.
+     * Salta DROP DATABASE / CREATE DATABASE e sopprime USE `source`
+     * (il chiamante ha già scritto USE `target` come prima istruzione).
+     */
+    private void rewriteDump(InputStream rawSql, OutputStream stdin,
+                              String sourceDb, String targetDb) throws IOException {
+        java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(rawSql, java.nio.charset.StandardCharsets.UTF_8));
+        java.io.PrintStream out = new java.io.PrintStream(stdin, true, java.nio.charset.StandardCharsets.UTF_8);
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (line.contains("DROP DATABASE") || line.contains("CREATE DATABASE")) {
+                continue;
+            }
+            if (line.startsWith("USE `" + sourceDb + "`")) {
+                // già scritto USE `target` prima di chiamare rewriteDump
+                continue;
+            }
+            out.println(line);
+        }
+        out.flush();
     }
 
     /**

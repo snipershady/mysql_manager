@@ -31,9 +31,65 @@ Autenticazione a due fattori (MFA/TOTP) **obbligatoria** per tutti gli utenti.
 
 - **Java 21** (OpenJDK o Oracle JDK)
 - **Maven 3.6+**
+- **Git**
 - **MySQL 8.x** o **MariaDB 10.6+**
 - `mysqldump` e `mysql` disponibili nel PATH (per backup/ripristino)
 - App TOTP sul telefono: Google Authenticator, Aegis, Authy
+
+---
+
+## Installazione dipendenze (Debian 13 / Ubuntu)
+
+### Java 21
+
+```bash
+sudo apt update
+sudo apt install -y openjdk-21-jdk
+java -version
+```
+
+### Maven
+
+```bash
+sudo apt install -y maven
+mvn -version
+```
+
+> Su Ubuntu 22.04 o versioni precedenti il pacchetto `maven` potrebbe installare una versione troppo vecchia.
+> In quel caso scarica Maven manualmente:
+>
+> ```bash
+> MVN_VERSION=3.9.9
+> wget https://downloads.apache.org/maven/maven-3/${MVN_VERSION}/binaries/apache-maven-${MVN_VERSION}-bin.tar.gz
+> sudo tar -xzf apache-maven-${MVN_VERSION}-bin.tar.gz -C /opt
+> sudo ln -s /opt/apache-maven-${MVN_VERSION}/bin/mvn /usr/local/bin/mvn
+> mvn -version
+> ```
+
+### Git
+
+```bash
+sudo apt install -y git
+git --version
+```
+
+### MySQL / MariaDB
+
+```bash
+# MySQL 8
+sudo apt install -y mysql-server
+
+# oppure MariaDB
+sudo apt install -y mariadb-server
+
+sudo systemctl enable --now mysql   # oppure mariadb
+```
+
+### Tutto in un colpo solo
+
+```bash
+sudo apt update && sudo apt install -y openjdk-21-jdk maven git mysql-server
+```
 
 ---
 
