@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Errore SQL')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <h1>Errore SQL</h1>
+    <div class="alert alert-error" th:text="${error}"></div>
+    <p>SQL State: <code th:text="${sqlState}"></code></p>
+    <a th:href="@{/}" class="btn btn-primary">Torna alla Dashboard</a>
+</main>
+</body>
+</html>

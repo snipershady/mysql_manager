@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Utenti MySQL')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <h1>Utenti MySQL</h1>
+        <a th:href="@{/mysql-users/create}" class="btn btn-primary">+ Nuovo Utente</a>
+    </div>
+
+    <div th:replace="~{layout/base :: alerts}"></div>
+
+    <table class="table" th:if="${users != null and !users.isEmpty()}">
+        <thead>
+            <tr>
+                <th>Utente</th>
+                <th>Host</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="u : ${users}">
+                <td th:text="${u.user()}"></td>
+                <td th:text="${u.host()}"></td>
+                <td>
+                    <a th:href="@{/mysql-users/{user}/grants(user=${u.user()},host=${u.host()})}"
+                       class="btn btn-sm">Grants</a>
+                    <button class="btn btn-sm pwd-btn"
+                            th:data-user="${u.user()}"
+                            th:data-host="${u.host()}">
+                        Cambia Password
+                    </button>
+                    <form th:action="@{/mysql-users/{user}/drop(user=${u.user()})}"
+                          method="post" style="display:inline"
+                          onsubmit="return confirm('Eliminare utente?')">
+                        <input type="hidden" name="host" th:value="${u.host()}"/>
+                        <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <p th:if="${users == null or users.isEmpty()}" class="empty-state">Nessun utente trovato.</p>
+
+    <!-- Modal cambia password -->
+    <div id="pwdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:2rem;border-radius:8px;min-width:360px;max-width:480px;width:90%;">
+            <h3 style="margin-top:0;">Cambia Password</h3>
+            <p>Utente: <strong id="pwdModalUser"></strong></p>
+            <form id="pwdForm" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" id="pwdHost" name="host"/>
+                <div style="margin-bottom:1rem;">
+                    <label for="newPassword">Nuova password</label>
+                    <input id="newPassword" name="password" type="password" required
+                           style="width:100%;margin-top:.4rem;padding:.5rem;box-sizing:border-box;"/>
+                </div>
+                <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+                    <button type="button" onclick="closePwdModal()" class="btn btn-secondary">Annulla</button>
+                    <button type="submit" class="btn btn-primary">Salva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.pwd-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var user = this.dataset.user;
+                var host = this.dataset.host;
+                document.getElementById('pwdModalUser').textContent = user + '@' + host;
+                document.getElementById('pwdHost').value = host;
+                document.getElementById('pwdForm').action = '/mysql-users/' + encodeURIComponent(user) + '/password';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('pwdModal').style.display = 'flex';
+            });
+        });
+        function closePwdModal() {
+            document.getElementById('pwdModal').style.display = 'none';
+        }
+        document.getElementById('pwdModal').addEventListener('click', function(e) {
+            if (e.target === this) closePwdModal();
+        });
+    </script>
+</main>
+</body>
+</html>

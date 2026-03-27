@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Backup')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <div>
+            <a th:href="@{/db}" class="breadcrumb">Database</a> /
+            <a th:href="@{/db/{db}(db=${database})}" class="breadcrumb" th:text="${database}">database</a> /
+            <h1>Backup disponibili</h1>
+        </div>
+        <form th:action="@{/db/{db}/backup(db=${database})}" method="post">
+            <button type="submit" class="btn btn-primary">&#128190; Nuovo Backup</button>
+        </form>
+    </div>
+
+    <div th:replace="~{layout/base :: alerts}"></div>
+
+    <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+        Tutti i backup presenti sul server. Il ripristino esegue automaticamente un backup di sicurezza
+        del database corrente prima di sovrascriverlo.
+    </p>
+
+    <table class="table" th:if="${backups != null and !backups.isEmpty()}">
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Database</th>
+                <th>Data</th>
+                <th>Dimensione</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="b : ${backups}">
+                <td><code th:text="${b.filename()}">file.sql.gz</code></td>
+                <td th:text="${b.database()}">db</td>
+                <td th:text="${#temporals.format(b.createdAt(), 'dd/MM/yyyy HH:mm:ss')}">data</td>
+                <td th:text="${b.sizeFormatted()}">size</td>
+                <td>
+                    <form th:action="@{/db/{db}/restore(db=${database})}" method="post" style="display:inline"
+                          onsubmit="return confirm('Ripristinare questo backup?\n\nIl database corrente verrà sovrascritto. Un backup di sicurezza verrà creato automaticamente.')">
+                        <input type="hidden" name="filename" th:value="${b.filename()}"/>
+                        <button type="submit" class="btn btn-sm btn-danger">&#9851; Ripristina</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p th:if="${backups == null or backups.isEmpty()}" class="empty-state">
+        Nessun backup trovato. Esegui il primo backup dalla pagina del database.
+    </p>
+</main>
+</body>
+</html>

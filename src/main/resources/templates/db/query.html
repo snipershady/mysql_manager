@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Query')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <div>
+            <a th:href="@{/db}" class="breadcrumb">Database</a> /
+            <a th:href="@{/db/{db}(db=${database})}" class="breadcrumb" th:text="${database}">db</a> /
+            <h1>Query SQL</h1>
+        </div>
+    </div>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <form th:action="@{/db/{db}/query(db=${database})}" method="post">
+        <div class="form-group">
+            <label for="sqlInput">SQL</label>
+            <textarea id="sqlInput" name="sql" rows="8" class="sql-editor"
+                      th:text="${sql}" placeholder="SELECT * FROM tabella LIMIT 100;"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Esegui</button>
+    </form>
+
+    <!-- Risultati -->
+    <div th:if="${result}" class="result-section">
+        <div class="result-meta">
+            <span th:if="${result.updateQuery}">
+                Righe interessate: <strong th:text="${result.affectedRows}">0</strong>
+            </span>
+            <span th:unless="${result.updateQuery}">
+                Righe restituite: <strong th:text="${result.rowCount}">0</strong>
+            </span>
+            &nbsp;|&nbsp; Tempo: <strong th:text="${result.executionTimeMs} + ' ms'">0 ms</strong>
+        </div>
+
+        <div th:unless="${result.updateQuery}" class="table-wrapper">
+            <table class="table" th:if="${!result.columns.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th th:each="col : ${result.columns}" th:text="${col}">col</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="row : ${result.rows}">
+                        <td th:each="cell : ${row}" th:text="${cell}">val</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

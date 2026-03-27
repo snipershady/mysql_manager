@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Configura MFA — MySQL Manager</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body class="auth-page">
+<div class="auth-card" style="max-width:480px;">
+    <h1>MySQL Manager</h1>
+    <h2>Configura Autenticazione a Due Fattori</h2>
+
+    <p>Scansiona il QR code con Google Authenticator, Aegis o un'app TOTP compatibile.</p>
+
+    <div class="qr-container">
+        <img th:src="${qrDataUri}" alt="QR Code MFA" style="width:220px;height:220px;"/>
+    </div>
+
+    <details style="margin: 1rem 0;">
+        <summary>Inserisci manualmente la chiave segreta</summary>
+        <code th:text="${secret}" style="word-break:break-all; font-size:0.85rem;"></code>
+    </details>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <p><strong>Inserisci il primo codice per confermare:</strong></p>
+    <form th:action="@{/mfa/setup}" method="post">
+        <div class="form-group">
+            <label for="code">Codice OTP</label>
+            <input type="text" id="code" name="code" required autofocus
+                   maxlength="6" pattern="[0-9]{6}"
+                   placeholder="000000"
+                   style="font-size:2rem; letter-spacing:0.5rem; text-align:center;"/>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Attiva MFA</button>
+    </form>
+</div>
+</body>
+</html>

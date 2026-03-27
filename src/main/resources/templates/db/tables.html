@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/base :: head(${database})}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <div>
+            <a th:href="@{/db}" class="breadcrumb">Database</a> /
+            <h1 th:text="${database}">database</h1>
+        </div>
+        <div class="btn-group">
+            <a th:href="@{/db/{db}/query(db=${database})}" class="btn btn-primary">Esegui Query</a>
+            <form th:action="@{/db/{db}/backup(db=${database})}" method="post"
+                  sec:authorize="hasRole('ADMIN')">
+                <button type="submit" class="btn btn-secondary">&#128190; Backup</button>
+            </form>
+            <a th:href="@{/db/{db}/backups(db=${database})}" class="btn btn-secondary"
+               sec:authorize="hasRole('ADMIN')">&#9851; Ripristina</a>
+            <form th:action="@{/db/{db}/drop(db=${database})}" method="post"
+                  sec:authorize="hasRole('ADMIN')"
+                  onsubmit="return confirm('Sei sicuro di voler eliminare il database? Operazione irreversibile!')">
+                <button type="submit" class="btn btn-danger">Elimina DB</button>
+            </form>
+        </div>
+    </div>
+
+    <div th:replace="~{layout/base :: alerts}"></div>
+
+    <h2>Tabelle (<span th:text="${tables != null ? tables.size() : 0}">0</span>)</h2>
+
+    <table th:if="${tables != null and !tables.isEmpty()}" class="table">
+        <thead>
+            <tr>
+                <th>Nome Tabella</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="table : ${tables}">
+                <td>
+                    <a th:href="@{/db/{db}/table/{t}(db=${database},t=${table})}"
+                       th:text="${table}">tabella</a>
+                </td>
+                <td>
+                    <a th:href="@{/db/{db}/query(db=${database})}"
+                       th:attr="onclick=|document.getElementById('sqlInput').value='SELECT * FROM \`${table}\` LIMIT 100';|"
+                       class="btn btn-sm">
+                        Visualizza
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <p th:if="${tables == null or tables.isEmpty()}" class="empty-state">Nessuna tabella trovata.</p>
+
+    <div th:if="${dbUsers != null}" sec:authorize="hasRole('ADMIN')" style="margin-top:2rem;">
+        <h2>Utenti con accesso (<span th:text="${dbUsers.size()}">0</span>)</h2>
+        <table th:if="${!dbUsers.isEmpty()}" class="table">
+            <thead>
+                <tr>
+                    <th>Utente</th>
+                    <th>Host</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="u : ${dbUsers}">
+                    <td th:text="${u.user()}"></td>
+                    <td th:text="${u.host()}"></td>
+                    <td>
+                        <button class="btn btn-sm pwd-btn"
+                                th:data-user="${u.user()}"
+                                th:data-host="${u.host()}">
+                            Cambia Password
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <p th:if="${dbUsers.isEmpty()}" class="empty-state">Nessun utente con accesso specifico a questo database.</p>
+    </div>
+
+    <!-- Modal cambia password -->
+    <div id="pwdModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:2rem;border-radius:8px;min-width:360px;max-width:480px;width:90%;">
+            <h3 style="margin-top:0;">Cambia Password</h3>
+            <p>Utente: <strong id="pwdModalUser"></strong></p>
+            <form id="pwdForm" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" id="pwdHost" name="host"/>
+                <input type="hidden" name="returnTo" th:value="@{/db/{db}(db=${database})}"/>
+                <div style="margin-bottom:1rem;">
+                    <label for="newPassword">Nuova password</label>
+                    <input id="newPassword" name="password" type="password" required
+                           style="width:100%;margin-top:.4rem;padding:.5rem;box-sizing:border-box;"/>
+                </div>
+                <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+                    <button type="button" onclick="closePwdModal()" class="btn btn-secondary">Annulla</button>
+                    <button type="submit" class="btn btn-primary">Salva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.pwd-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var user = this.dataset.user;
+                var host = this.dataset.host;
+                document.getElementById('pwdModalUser').textContent = user + '@' + host;
+                document.getElementById('pwdHost').value = host;
+                document.getElementById('pwdForm').action = '/mysql-users/' + encodeURIComponent(user) + '/password';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('pwdModal').style.display = 'flex';
+            });
+        });
+        function closePwdModal() {
+            document.getElementById('pwdModal').style.display = 'none';
+        }
+        document.getElementById('pwdModal').addEventListener('click', function(e) {
+            if (e.target === this) closePwdModal();
+        });
+    </script>
+</main>
+</body>
+</html>

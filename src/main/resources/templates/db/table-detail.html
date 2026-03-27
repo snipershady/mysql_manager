@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head(${table})}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <div>
+            <a th:href="@{/db}" class="breadcrumb">Database</a> /
+            <a th:href="@{/db/{db}(db=${database})}" class="breadcrumb" th:text="${database}">db</a> /
+            <h1 th:text="${table}">tabella</h1>
+        </div>
+        <a th:href="@{/db/{db}/query(db=${database})}" class="btn btn-primary">Esegui Query</a>
+    </div>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <h2>Struttura colonne</h2>
+    <table class="table" th:if="${columns != null and !columns.isEmpty()}">
+        <thead>
+            <tr>
+                <th>Colonna</th>
+                <th>Tipo</th>
+                <th>Dimensione</th>
+                <th>Nullable</th>
+                <th>Default</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="col : ${columns}">
+                <td th:text="${col.name()}"></td>
+                <td th:text="${col.type()}"></td>
+                <td th:text="${col.size()}"></td>
+                <td th:text="${col.nullable()}"></td>
+                <td th:text="${col.defaultValue()}"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>CREATE TABLE</h2>
+    <pre class="code-block" th:text="${createSql}"></pre>
+</main>
+</body>
+</html>

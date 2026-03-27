@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Grants')}" ></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <div>
+            <a th:href="@{/mysql-users}" class="breadcrumb">Utenti MySQL</a> /
+            <h1><span th:text="${mysqlUser}">user</span>@<span th:text="${host}">host</span></h1>
+        </div>
+    </div>
+
+    <div th:replace="~{layout/base :: alerts}"></div>
+
+    <h2>Privilegi attuali</h2>
+    <ul th:if="${grants != null and !grants.isEmpty()}">
+        <li th:each="g : ${grants}"><code th:text="${g}"></code></li>
+    </ul>
+    <p th:if="${grants == null or grants.isEmpty()}" class="empty-state">Nessun privilegio assegnato.</p>
+
+    <h2>Assegna Privilegi</h2>
+    <form th:action="@{/mysql-users/{u}/grant(u=${mysqlUser})}" method="post" class="form-inline">
+        <input type="hidden" name="host" th:value="${host}"/>
+        <select name="database">
+            <option th:each="db : ${databases}" th:value="${db}" th:text="${db}">db</option>
+        </select>
+        <select name="privileges">
+            <option value="ALL PRIVILEGES">ALL PRIVILEGES</option>
+            <option value="SELECT">SELECT</option>
+            <option value="SELECT,INSERT,UPDATE,DELETE">SELECT,INSERT,UPDATE,DELETE</option>
+            <option value="SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER">Completo (no GRANT)</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Assegna</button>
+    </form>
+
+    <h2>Revoca Privilegi</h2>
+    <form th:action="@{/mysql-users/{u}/revoke(u=${mysqlUser})}" method="post" class="form-inline">
+        <input type="hidden" name="host" th:value="${host}"/>
+        <select name="database">
+            <option th:each="db : ${databases}" th:value="${db}" th:text="${db}">db</option>
+        </select>
+        <select name="privileges">
+            <option value="ALL PRIVILEGES">ALL PRIVILEGES</option>
+            <option value="SELECT">SELECT</option>
+            <option value="SELECT,INSERT,UPDATE,DELETE">SELECT,INSERT,UPDATE,DELETE</option>
+        </select>
+        <button type="submit" class="btn btn-danger">Revoca</button>
+    </form>
+</main>
+</body>
+</html>

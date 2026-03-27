@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Audit Log')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <h1>Audit Log</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Utente</th>
+                <th>IP</th>
+                <th>Database</th>
+                <th>SQL</th>
+                <th>Tempo (ms)</th>
+                <th>Esito</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="log : ${logs.content}">
+                <td th:text="${log.username}"></td>
+                <td th:text="${log.clientIp}"></td>
+                <td th:text="${log.targetDatabase}"></td>
+                <td><code th:text="${#strings.abbreviate(log.sqlText, 80)}"></code></td>
+                <td th:text="${log.executionTimeMs}"></td>
+                <td>
+                    <span th:if="${log.success}" class="badge badge-success">OK</span>
+                    <span th:unless="${log.success}" class="badge badge-error" th:title="${log.errorMessage}">ERRORE</span>
+                </td>
+                <td th:text="${#temporals.format(log.executedAt, 'dd/MM/yyyy HH:mm:ss')}"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Paginazione -->
+    <div class="pagination">
+        <a th:if="${currentPage > 0}"
+           th:href="@{/admin/audit(page=${currentPage - 1})}"
+           class="btn btn-sm">Precedente</a>
+        <span>Pagina <span th:text="${currentPage + 1}">1</span> di <span th:text="${logs.totalPages}">1</span></span>
+        <a th:if="${currentPage < logs.totalPages - 1}"
+           th:href="@{/admin/audit(page=${currentPage + 1})}"
+           class="btn btn-sm">Successiva</a>
+    </div>
+</main>
+</body>
+</html>

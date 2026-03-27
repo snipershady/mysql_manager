@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Verifica MFA — MySQL Manager</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body class="auth-page">
+<div class="auth-card">
+    <h1>MySQL Manager</h1>
+    <h2>Verifica MFA</h2>
+    <p>Inserisci il codice a 6 cifre dall'app Authenticator.</p>
+
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <form th:action="@{/mfa/verify}" method="post">
+        <div class="form-group">
+            <label for="code">Codice OTP</label>
+            <input type="text" id="code" name="code" required autofocus
+                   maxlength="6" pattern="[0-9]{6}"
+                   placeholder="000000"
+                   style="font-size:2rem; letter-spacing:0.5rem; text-align:center;"/>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Verifica</button>
+    </form>
+</div>
+</body>
+</html>

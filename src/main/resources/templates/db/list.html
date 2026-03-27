@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/base :: head('Database')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <h1>Database MySQL</h1>
+        <button sec:authorize="hasRole('ADMIN')" class="btn btn-primary"
+                onclick="document.getElementById('createDbModal').style.display='flex'">
+            + Nuovo Database
+        </button>
+    </div>
+
+    <div th:replace="~{layout/base :: alerts}"></div>
+
+    <div class="db-grid">
+        <a th:each="db : ${databases}"
+           th:href="@{/db/{db}(db=${db})}"
+           class="db-card">
+            <span class="db-icon">&#128447;</span>
+            <span th:text="${db}">database</span>
+        </a>
+    </div>
+
+    <!-- Modal Crea Database -->
+    <div id="createDbModal" class="modal" style="display:none;" sec:authorize="hasRole('ADMIN')">
+        <div class="modal-content">
+            <h2>Crea nuovo database</h2>
+            <form th:action="@{/db/create}" method="post">
+                <div class="form-group">
+                    <label>Nome database</label>
+                    <input type="text" name="name" id="dbName" required pattern="[a-zA-Z0-9_$]+"
+                           placeholder="nome_database"/>
+                </div>
+                <div class="form-group">
+                    <label>Charset</label>
+                    <select name="charset">
+                        <option value="utf8mb4">utf8mb4 (raccomandato)</option>
+                        <option value="utf8">utf8</option>
+                        <option value="latin1">latin1</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Collation</label>
+                    <select name="collation">
+                        <option value="utf8mb4_unicode_ci">utf8mb4_unicode_ci</option>
+                        <option value="utf8mb4_general_ci">utf8mb4_general_ci</option>
+                        <option value="utf8_general_ci">utf8_general_ci</option>
+                    </select>
+                </div>
+
+                <hr style="margin:1rem 0; border-color: var(--border)"/>
+
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+                        <input type="checkbox" name="createUser" value="true" id="createUserCheck"
+                               onchange="document.getElementById('userFields').style.display = this.checked ? 'block' : 'none'"/>
+                        Crea utente con lo stesso nome del database
+                    </label>
+                </div>
+
+                <div id="userFields" style="display:none;">
+                    <div class="form-group">
+                        <label>Host utente</label>
+                        <input type="text" name="userHost" value="%" placeholder="%"/>
+                        <small style="color:var(--text-muted)">% = qualsiasi host</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Password utente</label>
+                        <input type="password" name="userPassword" id="userPassword" placeholder="Password sicura"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Privilegi sul database</label>
+                        <select name="userPrivileges">
+                            <option value="ALL PRIVILEGES">ALL PRIVILEGES — accesso completo</option>
+                            <option value="SELECT">SELECT — sola lettura</option>
+                            <option value="SELECT,INSERT,UPDATE,DELETE">SELECT, INSERT, UPDATE, DELETE — lettura/scrittura</option>
+                            <option value="SELECT,INSERT,UPDATE,DELETE,CREATE,DROP,ALTER">Completo (no GRANT)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Crea</button>
+                    <button type="button" class="btn btn-secondary"
+                            onclick="document.getElementById('createDbModal').style.display='none'">
+                        Annulla
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

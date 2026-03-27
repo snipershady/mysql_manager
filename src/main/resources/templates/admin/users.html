@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Gestione Utenti App')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <h1>Utenti Applicazione</h1>
+        <button class="btn btn-primary" onclick="document.getElementById('createModal').style.display='flex'">
+            + Nuovo Utente
+        </button>
+    </div>
+
+    <div th:replace="~{layout/base :: alerts}"></div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Ruolo</th>
+                <th>MFA</th>
+                <th>Stato</th>
+                <th>Ultimo Login</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="u : ${users}">
+                <td th:text="${u.id}"></td>
+                <td th:text="${u.username}"></td>
+                <td th:text="${u.role}"></td>
+                <td>
+                    <span th:if="${u.mfaEnabled}" class="badge badge-success">Attivo</span>
+                    <span th:unless="${u.mfaEnabled}" class="badge badge-error">Non configurato</span>
+                </td>
+                <td>
+                    <span th:if="${u.enabled}" class="badge badge-success">Attivo</span>
+                    <span th:unless="${u.enabled}" class="badge badge-error">Disabilitato</span>
+                </td>
+                <td th:text="${u.lastLoginAt != null ? #temporals.format(u.lastLoginAt, 'dd/MM/yyyy HH:mm') : 'Mai'}"></td>
+                <td>
+                    <form th:action="@{/admin/users/{id}/toggle(id=${u.id})}" method="post" style="display:inline">
+                        <button type="submit" class="btn btn-sm"
+                                th:text="${u.enabled ? 'Disabilita' : 'Abilita'}">Toggle</button>
+                    </form>
+                    <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post" style="display:inline"
+                          onsubmit="return confirm('Eliminare utente?')">
+                        <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Modal Crea Utente -->
+    <div id="createModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Crea nuovo utente</h2>
+            <form th:action="@{/admin/users/create}" method="post">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" required/>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required minlength="8"/>
+                </div>
+                <div class="form-group">
+                    <label>Ruolo</label>
+                    <select name="role">
+                        <option value="OPERATOR">OPERATOR</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Crea</button>
+                    <button type="button" class="btn btn-secondary"
+                            onclick="document.getElementById('createModal').style.display='none'">
+                        Annulla
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

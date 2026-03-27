@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Richiesta Non Valida')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <h1>400 — Richiesta Non Valida</h1>
+    <div class="alert alert-error" th:text="${error}"></div>
+    <a th:href="@{/}" class="btn btn-primary">Torna alla Dashboard</a>
+</main>
+</body>
+</html>

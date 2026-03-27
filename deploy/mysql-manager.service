@@ -1,0 +1,37 @@
+[Unit]
+Description=MySQL Manager Web Application
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=mysqlmgr
+Group=mysqlmgr
+WorkingDirectory=/opt/mysql-manager
+
+# Le variabili sensibili sono in /etc/mysql-manager/env
+EnvironmentFile=/etc/mysql-manager/env
+
+ExecStart=/usr/bin/java \
+    -Xms128m -Xmx512m \
+    -Djava.security.egd=file:/dev/./urandom \
+    -jar /opt/mysql-manager/mysql-manager.jar \
+    --spring.profiles.active=prod
+
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+# Sicurezza
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/log/mysql-manager
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mysql-manager
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${title} + ' — MySQL Manager'">MySQL Manager</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+
+<nav th:fragment="navbar" class="navbar">
+    <div class="nav-brand">
+        <a th:href="@{/}">MySQL Manager</a>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/db}">Database</a>
+        <a th:href="@{/mysql-users}" sec:authorize="hasRole('ADMIN')">Utenti MySQL</a>
+        <a th:href="@{/admin/users}" sec:authorize="hasRole('ADMIN')">Admin</a>
+        <a th:href="@{/admin/audit}" sec:authorize="hasRole('ADMIN')">Audit Log</a>
+    </div>
+    <div class="nav-user">
+        <a th:href="@{/profile}" style="text-decoration:none; color:inherit;"
+           sec:authentication="name"></a>
+        <form th:action="@{/logout}" method="post" style="display:inline">
+            <button type="submit" class="btn-link">Esci</button>
+        </form>
+    </div>
+</nav>
+
+<div th:fragment="alerts">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+</div>
+
+</body>
+</html>
