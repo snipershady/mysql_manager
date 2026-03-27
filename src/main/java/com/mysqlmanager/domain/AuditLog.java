@@ -8,7 +8,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "audit_log", schema = "mysql_manager_app")
+@Table(name = "audit_log", catalog = "mysql_manager_app")
 @Getter @Setter @NoArgsConstructor
 public class AuditLog {
 
