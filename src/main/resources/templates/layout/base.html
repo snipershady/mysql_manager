@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title th:text="${title} + ' — MySQL Manager'">MySQL Manager</title>
     <link rel="stylesheet" th:href="@{/css/app.css}"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
@@ -29,8 +30,41 @@
 </nav>
 
 <div th:fragment="alerts">
-    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <script th:if="${success}" th:inline="javascript">
+        Swal.fire({
+            title: 'Operazione completata',
+            text: [[${success}]],
+            icon: 'success',
+            confirmButtonColor: '#2563eb'
+        });
+    </script>
+    <script th:if="${error}" th:inline="javascript">
+        Swal.fire({
+            title: 'Errore',
+            text: [[${error}]],
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+        });
+    </script>
+    <script>
+        function confirmAction(form, message) {
+            Swal.fire({
+                title: 'Sei sicuro?',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sì, procedi',
+                cancelButtonText: 'Annulla'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+            return false;
+        }
+    </script>
 </div>
 
 </body>

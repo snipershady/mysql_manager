@@ -20,7 +20,7 @@
                sec:authorize="hasRole('ADMIN')">&#9851; Ripristina</a>
             <form th:action="@{/db/{db}/drop(db=${database})}" method="post"
                   sec:authorize="hasRole('ADMIN')"
-                  onsubmit="return confirm('Sei sicuro di voler eliminare il database? Operazione irreversibile!')">
+                  onsubmit="return confirmAction(this, 'Sei sicuro di voler eliminare il database? Operazione irreversibile!')">
                 <button type="submit" class="btn btn-danger">Elimina DB</button>
             </form>
         </div>

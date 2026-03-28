@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Verifica MFA — MySQL Manager</title>
     <link rel="stylesheet" th:href="@{/css/app.css}"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="auth-page">
 <div class="auth-card">
@@ -12,7 +13,14 @@
     <h2>Verifica MFA</h2>
     <p>Inserisci il codice a 6 cifre dall'app Authenticator.</p>
 
-    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <script th:if="${error}" th:inline="javascript">
+        Swal.fire({
+            title: 'Errore!',
+            text: [[${error}]],
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+        });
+    </script>
 
     <form th:action="@{/mfa/verify}" method="post">
         <div class="form-group">
