@@ -5,7 +5,7 @@
 <nav th:replace="~{layout/base :: navbar}"></nav>
 <main class="container">
     <h1>400 — Richiesta Non Valida</h1>
-    <div class="alert alert-error" th:text="${error}"></div>
+    <div th:replace="~{layout/base :: alerts}"></div>
     <a th:href="@{/}" class="btn btn-primary">Torna alla Dashboard</a>
 </main>
 </body>

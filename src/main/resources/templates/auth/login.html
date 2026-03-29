@@ -5,27 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Login — MySQL Manager</title>
     <link rel="stylesheet" th:href="@{/css/app.css}"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="auth-page">
 <div class="auth-card">
     <h1>MySQL Manager</h1>
     <h2>Accesso</h2>
 
-    <div th:if="${param.error}" class="alert alert-error">
-        Credenziali non valide. Riprova.
-    </div>
-    <div th:if="${param.logout}" class="alert alert-success">
-        Disconnessione avvenuta con successo.
-    </div>
-    <div th:if="${param.expired}" class="alert alert-error">
-        Sessione scaduta. Accedi nuovamente.
-    </div>
-    <div th:if="${param['password-changed']}" class="alert alert-success">
-        Password aggiornata. Accedi con la nuova password.
-    </div>
-    <div th:if="${param['mfa-reset']}" class="alert alert-success">
-        MFA resettato. Accedi per configurare un nuovo dispositivo.
-    </div>
+    <script th:if="${param.error}" th:inline="javascript">
+        Swal.fire({
+            title: 'Errore!',
+            text: 'Credenziali non valide. Riprova.',
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+        });
+    </script>
+    <script th:if="${param.logout}" th:inline="javascript">
+        Swal.fire({
+            title: 'Logout!',
+            text: 'Disconnessione avvenuta con successo.',
+            icon: 'success',
+            confirmButtonColor: '#2563eb'
+        });
+    </script>
+    <script th:if="${param.expired}" th:inline="javascript">
+        Swal.fire({
+            title: 'Sessione scaduta!',
+            text: 'Sessione scaduta. Accedi nuovamente.',
+            icon: 'warning',
+            confirmButtonColor: '#2563eb'
+        });
+    </script>
+    <script th:if="${param['password-changed']}" th:inline="javascript">
+        Swal.fire({
+            title: 'Password aggiornata!',
+            text: 'Password aggiornata. Accedi con la nuova password.',
+            icon: 'success',
+            confirmButtonColor: '#2563eb'
+        });
+    </script>
+    <script th:if="${param['mfa-reset']}" th:inline="javascript">
+        Swal.fire({
+            title: 'MFA resettato!',
+            text: 'MFA resettato. Accedi per configurare un nuovo dispositivo.',
+            icon: 'success',
+            confirmButtonColor: '#2563eb'
+        });
+    </script>
 
     <form th:action="@{/login}" method="post">
         <div class="form-group">

@@ -33,7 +33,7 @@
                     </button>
                     <form th:action="@{/mysql-users/{user}/drop(user=${u.user()})}"
                           method="post" style="display:inline"
-                          onsubmit="return confirm('Eliminare utente?')">
+                          onsubmit="return confirmAction(this, 'Sei sicuro di voler eliminare l\'utente MySQL?')">
                         <input type="hidden" name="host" th:value="${u.host()}"/>
                         <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
                     </form>
