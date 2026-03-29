@@ -1,0 +1,75 @@
+name: Bump build version
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  bump-version:
+    # Non rieseguire sul commit di bump stesso (evita loop infiniti)
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Usa un token con permesso di push per poter committare su main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Fetch completo per avere l'history corretto
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Calcola nuova versione (patch + 1)
+        id: version
+        run: |
+          CURRENT=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          BASE=${CURRENT%.*}
+          PATCH=${CURRENT##*.}
+          NEW_VERSION="${BASE}.$((PATCH + 1))"
+          echo "current=${CURRENT}" >> $GITHUB_OUTPUT
+          echo "new=${NEW_VERSION}"  >> $GITHUB_OUTPUT
+          echo "Versione corrente: ${CURRENT} → nuova: ${NEW_VERSION}"
+
+      - name: Aggiorna pom.xml
+        run: |
+          mvn versions:set \
+            -DnewVersion="${{ steps.version.outputs.new }}" \
+            -DgenerateBackupPoms=false
+
+      - name: Aggiorna README.md
+        run: |
+          sed -i \
+            "s/mysql-manager-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.jar/mysql-manager-${{ steps.version.outputs.new }}.jar/g" \
+            README.md
+
+      - name: Commit e push (solo su push a main, non su PR)
+        if: github.event_name == 'push'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pom.xml README.md
+          # Committa solo se ci sono modifiche effettive
+          git diff --staged --quiet || \
+            git commit -m "chore: bump version to ${{ steps.version.outputs.new }} [skip ci]"
+          git push
+
+      - name: Mostra diff (solo su PR — dry run)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "## Anteprima bump versione" >> $GITHUB_STEP_SUMMARY
+          echo "Versione corrente: \`${{ steps.version.outputs.current }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Nuova versione dopo merge: \`${{ steps.version.outputs.new }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Modifiche a pom.xml e README.md:" >> $GITHUB_STEP_SUMMARY
+          echo '```diff' >> $GITHUB_STEP_SUMMARY
+          git diff -- pom.xml README.md >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

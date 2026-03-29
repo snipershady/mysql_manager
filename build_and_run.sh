@@ -1,4 +1,4 @@
 #!/bin/bash
 
-/usr/bin/mvn clean package -DskipTests && \\
-java -jar target/mysql-manager-1.0.0.jar
+/usr/bin/mvn clean package -DskipTests && \
+java -jar target/$(ls -t target/mysql-manager-*.jar | head -1 | xargs basename)
