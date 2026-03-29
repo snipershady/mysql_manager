@@ -489,6 +489,57 @@ Non è necessario che il file `application.properties` del progetto sorgente sia
 
 ---
 
+## Aggiornamento delle dipendenze
+
+### Verificare dipendenze obsolete
+
+```bash
+mvn versions:display-dependency-updates
+```
+
+Mostra l'elenco di tutte le dipendenze con la versione attuale e l'ultima disponibile, senza modificare nulla:
+
+```
+[INFO] The following dependencies in Dependencies have newer versions:
+[INFO]   org.springframework.boot:spring-boot-starter-parent ... 3.2.4 -> 3.4.1
+[INFO]   com.mysql:mysql-connector-j ...................... 8.3.0 -> 9.2.0
+```
+
+### Aggiornare automaticamente il pom.xml
+
+```bash
+mvn versions:use-latest-releases
+```
+
+Riscrive il `pom.xml` con le versioni più recenti di tutte le dipendenze.
+
+Per aggiornare solo le patch (consigliato in produzione):
+
+```bash
+mvn versions:use-latest-versions -DallowMajorUpdates=false -DallowMinorUpdates=false
+```
+
+### Verificare anche i plugin
+
+```bash
+mvn versions:display-plugin-updates
+```
+
+### Procedura consigliata
+
+```bash
+# 1. Aggiorna il pom.xml
+mvn versions:use-latest-releases
+
+# 2. Verifica che tutto compili
+mvn clean package -DskipTests
+
+# 3. Esegui i test
+mvn test
+```
+
+---
+
 ## Licenza
 
 MIT
