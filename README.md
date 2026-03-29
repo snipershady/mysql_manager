@@ -104,7 +104,7 @@ mvn clean package -DskipTests
 Il JAR self-contained viene generato in:
 
 ```
-target/mysql-manager-1.0.1.jar
+target/mysql-manager-1.0.2.jar
 ```
 
 ---
@@ -153,13 +153,13 @@ mysql.manager.password=TuaPasswordRoot
 ### 2. Avvia il JAR
 
 ```bash
-java -jar target/mysql-manager-1.0.1.jar
+java -jar target/mysql-manager-1.0.2.jar
 ```
 
 Oppure, sovrascrivendo le proprietà da riga di comando senza toccare il file:
 
 ```bash
-java -jar target/mysql-manager-1.0.1.jar \
+java -jar target/mysql-manager-1.0.2.jar \
   --spring.datasource.password=SceglieUnaPasswordSicura! \
   --mysql.manager.password=TuaPasswordRoot
 ```
@@ -177,7 +177,7 @@ L'applicazione sarà disponibile su [http://localhost:8080](http://localhost:808
 Per tenerla attiva dopo la chiusura del terminale, senza systemd:
 
 ```bash
-nohup java -jar target/mysql-manager-1.0.1.jar \
+nohup java -jar target/mysql-manager-1.0.2.jar \
   --spring.datasource.password=SceglieUnaPasswordSicura! \
   --mysql.manager.password=TuaPasswordRoot \
   > /var/log/mysql-manager.log 2>&1 &
@@ -254,7 +254,7 @@ sudo systemctl enable mysql-manager
 
 ```bash
 mvn clean package -DskipTests
-sudo cp target/mysql-manager-1.0.1.jar /opt/mysql-manager/mysql-manager.jar
+sudo cp target/mysql-manager-1.0.2.jar /opt/mysql-manager/mysql-manager.jar
 sudo systemctl restart mysql-manager
 ```
 
