@@ -5,7 +5,7 @@
 <nav th:replace="~{layout/base :: navbar}"></nav>
 <main class="container">
     <h1>403 — Accesso Negato</h1>
-    <p th:text="${error}">Non hai i permessi per accedere a questa risorsa.</p>
+    <div th:replace="~{layout/base :: alerts}"></div>
     <a th:href="@{/}" class="btn btn-primary">Torna alla Dashboard</a>
 </main>
 </body>

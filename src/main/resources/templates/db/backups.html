@@ -40,7 +40,7 @@
                 <td th:text="${b.sizeFormatted()}">size</td>
                 <td>
                     <form th:action="@{/db/{db}/restore(db=${database})}" method="post" style="display:inline"
-                          onsubmit="return confirm('Ripristinare questo backup?\n\nIl database corrente verrà sovrascritto. Un backup di sicurezza verrà creato automaticamente.')">
+                          onsubmit="return confirmAction(this, 'Ripristinare questo backup? Il database corrente verrà sovrascritto. Un backup di sicurezza verrà creato automaticamente.')">
                         <input type="hidden" name="filename" th:value="${b.filename()}"/>
                         <button type="submit" class="btn btn-sm btn-danger">&#9851; Ripristina</button>
                     </form>

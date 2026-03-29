@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Configura MFA — MySQL Manager</title>
     <link rel="stylesheet" th:href="@{/css/app.css}"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="auth-page">
 <div class="auth-card" style="max-width:480px;">
@@ -22,7 +23,14 @@
         <code th:text="${secret}" style="word-break:break-all; font-size:0.85rem;"></code>
     </details>
 
-    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+    <script th:if="${error}" th:inline="javascript">
+        Swal.fire({
+            title: 'Errore!',
+            text: [[${error}]],
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+        });
+    </script>
 
     <p><strong>Inserisci il primo codice per confermare:</strong></p>
     <form th:action="@{/mfa/setup}" method="post">

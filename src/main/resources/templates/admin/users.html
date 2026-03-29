@@ -45,7 +45,7 @@
                                 th:text="${u.enabled ? 'Disabilita' : 'Abilita'}">Toggle</button>
                     </form>
                     <form th:action="@{/admin/users/{id}/delete(id=${u.id})}" method="post" style="display:inline"
-                          onsubmit="return confirm('Eliminare utente?')">
+                          onsubmit="return confirmAction(this, 'Sei sicuro di voler eliminare l\'utente applicazione?')">
                         <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
                     </form>
                 </td>

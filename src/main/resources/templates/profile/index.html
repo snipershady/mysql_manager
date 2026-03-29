@@ -22,8 +22,22 @@
     <div class="card" style="margin-bottom:1.5rem;">
         <h2 style="margin-bottom:1rem;">&#128274; Cambia password</h2>
 
-        <div th:if="${pwError}" class="alert alert-error" th:text="${pwError}"></div>
-        <div th:if="${success != null and #strings.contains(success, 'password')}" class="alert alert-success" th:text="${success}"></div>
+        <script th:if="${pwError}" th:inline="javascript">
+            Swal.fire({
+                title: 'Errore!',
+                text: [[${pwError}]],
+                icon: 'error',
+                confirmButtonColor: '#dc2626'
+            });
+        </script>
+        <script th:if="${success != null and #strings.contains(success, 'password')}" th:inline="javascript">
+            Swal.fire({
+                title: 'Successo!',
+                text: [[${success}]],
+                icon: 'success',
+                confirmButtonColor: '#2563eb'
+            });
+        </script>
 
         <form th:action="@{/profile/change-password}" method="post">
             <div class="form-group">
@@ -54,10 +68,17 @@
             registrare un nuovo dispositivo TOTP.
         </p>
 
-        <div th:if="${mfaError}" class="alert alert-error" th:text="${mfaError}"></div>
+        <script th:if="${mfaError}" th:inline="javascript">
+            Swal.fire({
+                title: 'Errore!',
+                text: [[${mfaError}]],
+                icon: 'error',
+                confirmButtonColor: '#dc2626'
+            });
+        </script>
 
         <form th:action="@{/profile/reset-mfa}" method="post"
-              onsubmit="return confirm('Reset MFA?\n\nDovrai riconfigurare l\'autenticatore al prossimo accesso.')">
+              onsubmit="return confirmAction(this, 'Resettando l\'MFA, dovrai riconfigurare l\'autenticatore al prossimo accesso.')">
             <div class="form-group">
                 <label>Conferma con la password attuale</label>
                 <input type="password" name="currentPassword" required autocomplete="current-password"/>

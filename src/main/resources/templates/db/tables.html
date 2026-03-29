@@ -17,10 +17,12 @@
                 <button type="submit" class="btn btn-secondary">&#128190; Backup</button>
             </form>
             <a th:href="@{/db/{db}/backups(db=${database})}" class="btn btn-secondary"
-               sec:authorize="hasRole('ADMIN')">&#9851; Ripristina</a>
+               sec:authorize="hasRole('ADMIN')">&#9851; Ripristina DB</a>
+            <a th:href="@{/db/{db}/table-imports(db=${database})}" class="btn btn-secondary"
+               sec:authorize="hasRole('ADMIN')">&#128229; Importa Tabella</a>
             <form th:action="@{/db/{db}/drop(db=${database})}" method="post"
                   sec:authorize="hasRole('ADMIN')"
-                  onsubmit="return confirm('Sei sicuro di voler eliminare il database? Operazione irreversibile!')">
+                  onsubmit="return confirmAction(this, 'Sei sicuro di voler eliminare il database? Operazione irreversibile!')">
                 <button type="submit" class="btn btn-danger">Elimina DB</button>
             </form>
         </div>
@@ -44,11 +46,20 @@
                        th:text="${table}">tabella</a>
                 </td>
                 <td>
-                    <a th:href="@{/db/{db}/query(db=${database})}"
-                       th:attr="onclick=|document.getElementById('sqlInput').value='SELECT * FROM \`${table}\` LIMIT 100';|"
-                       class="btn btn-sm">
-                        Visualizza
-                    </a>
+                    <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+                        <a th:href="@{/db/{db}/query(db=${database})}"
+                           th:attr="onclick=|document.getElementById('sqlInput').value='SELECT * FROM \`${table}\` LIMIT 100';|"
+                           class="btn btn-sm">
+                            Visualizza
+                        </a>
+                        <form th:action="@{/db/{db}/table/{t}/backup(db=${database},t=${table})}" method="post"
+                              sec:authorize="hasRole('ADMIN')" style="margin:0;">
+                            <button type="submit" class="btn btn-sm btn-secondary"
+                                    title="Esporta struttura e dati della tabella in un file .sql.gz">
+                                &#128229; Esporta
+                            </button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         </tbody>
