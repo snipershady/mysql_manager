@@ -26,6 +26,8 @@ public class BackupService {
     private static final DateTimeFormatter TIMESTAMP_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
     private static final DateTimeFormatter TIMESTAMP_PARSE = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
     private static final Pattern BACKUP_PATTERN = Pattern.compile("^(.+)_(\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2})\\.sql\\.gz$");
+    // Naming tabella: {database}.{table}_{timestamp}.sql.gz
+    private static final Pattern TABLE_BACKUP_PATTERN = Pattern.compile("^(.+)\\.(.+)_(\\d{4}-\\d{2}-\\d{2}_\\d{2}-\\d{2}-\\d{2})\\.sql\\.gz$");
 
     @Value("${backup.path}")
     private String backupPath;
@@ -262,6 +264,156 @@ public class BackupService {
     public record BackupFile(
             String filename,
             String database,
+            long sizeBytes,
+            LocalDateTime createdAt,
+            String sizeFormatted
+    ) {}
+
+    // -------------------------------------------------------------------------
+    // Export / Import singola tabella
+    // -------------------------------------------------------------------------
+
+    /**
+     * Esporta una singola tabella (struttura + dati) tramite mysqldump.
+     * Il file prodotto è nominato {database}.{table}_{timestamp}.sql.gz
+     *
+     * @return path assoluto del file creato
+     */
+    public String backupTable(String database, String table) throws IOException, InterruptedException {
+        Path dir = Paths.get(backupPath);
+        Files.createDirectories(dir);
+
+        String filename = database + "." + table + "_" + LocalDateTime.now().format(TIMESTAMP_FMT) + ".sql.gz";
+        Path outFile = dir.resolve(filename);
+
+        ProcessBuilder pb = new ProcessBuilder(
+                mysqldumpBin,
+                "-h", host,
+                "-P", String.valueOf(port),
+                "-u", user,
+                "--single-transaction",
+                "--add-drop-table",
+                "--set-gtid-purged=OFF",
+                database,
+                table
+        );
+        pb.environment().put("MYSQL_PWD", password);
+
+        Process process = pb.start();
+
+        CompletableFuture<String> stderrFuture = CompletableFuture.supplyAsync(() -> {
+            try { return new String(process.getErrorStream().readAllBytes()).trim(); }
+            catch (IOException e) { return e.getMessage(); }
+        });
+
+        try (InputStream in = process.getInputStream();
+             GZIPOutputStream out = new GZIPOutputStream(Files.newOutputStream(outFile))) {
+            in.transferTo(out);
+        }
+
+        int exitCode = process.waitFor();
+        String stderr = stderrFuture.join();
+
+        if (exitCode != 0) {
+            Files.deleteIfExists(outFile);
+            throw new IOException("mysqldump tabella fallito (exit " + exitCode + "): " + stderr);
+        }
+
+        return outFile.toAbsolutePath().toString();
+    }
+
+    /**
+     * Importa il dump di una singola tabella nel database di destinazione.
+     * Non esegue backup di sicurezza: la tabella viene sovrascritta se già esistente
+     * (il dump include DROP TABLE IF EXISTS).
+     *
+     * @param targetDatabase database di destinazione
+     * @param filename       nome del file .sql.gz (solo filename, senza path)
+     */
+    public void restoreTable(String targetDatabase, String filename) throws IOException, InterruptedException {
+        if (filename.contains("/") || filename.contains("\\") || filename.contains("..")) {
+            throw new IllegalArgumentException("Nome file non valido: " + filename);
+        }
+        if (!TABLE_BACKUP_PATTERN.matcher(filename).matches()) {
+            throw new IllegalArgumentException("Il file non sembra un dump di tabella: " + filename);
+        }
+
+        Path backupFile = Paths.get(backupPath).resolve(filename);
+        if (!Files.exists(backupFile)) {
+            throw new IOException("File dump tabella non trovato: " + filename);
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(
+                mysqlBin,
+                "--no-defaults",
+                "-h", host,
+                "-P", String.valueOf(port),
+                "-u", user,
+                "-D", targetDatabase
+        );
+        pb.environment().put("MYSQL_PWD", password);
+
+        Process process = pb.start();
+
+        CompletableFuture<String> stderrFuture = CompletableFuture.supplyAsync(() -> {
+            try { return new String(process.getErrorStream().readAllBytes()).trim(); }
+            catch (IOException e) { return e.getMessage(); }
+        });
+
+        try (GZIPInputStream gz = new GZIPInputStream(Files.newInputStream(backupFile));
+             OutputStream stdin = process.getOutputStream()) {
+            gz.transferTo(stdin);
+        }
+
+        int exitCode = process.waitFor();
+        String stderr = stderrFuture.join();
+
+        if (exitCode != 0) {
+            throw new IOException("Import tabella fallito (exit " + exitCode + "): " + stderr);
+        }
+    }
+
+    /**
+     * Elenca tutti i dump di singola tabella presenti nella directory, dal più recente.
+     */
+    public List<TableBackupFile> listTableBackups() throws IOException {
+        Path dir = Paths.get(backupPath);
+        if (!Files.exists(dir)) {
+            return List.of();
+        }
+        try (Stream<Path> stream = Files.list(dir)) {
+            return stream
+                    .filter(p -> TABLE_BACKUP_PATTERN.matcher(p.getFileName().toString()).matches())
+                    .map(this::toTableBackupFile)
+                    .sorted(Comparator.comparing(TableBackupFile::createdAt).reversed())
+                    .toList();
+        }
+    }
+
+    private TableBackupFile toTableBackupFile(Path path) {
+        String filename = path.getFileName().toString();
+        long size = 0;
+        try { size = Files.size(path); } catch (IOException ignored) {}
+
+        Matcher m = TABLE_BACKUP_PATTERN.matcher(filename);
+        String dbName = m.matches() ? m.group(1) : "";
+        String tableName = m.matches() ? m.group(2) : filename;
+        LocalDateTime createdAt;
+        try {
+            createdAt = m.matches()
+                    ? LocalDateTime.parse(m.group(3), TIMESTAMP_PARSE)
+                    : LocalDateTime.ofEpochSecond(path.toFile().lastModified() / 1000, 0, java.time.ZoneOffset.UTC);
+        } catch (Exception e) {
+            createdAt = LocalDateTime.now();
+        }
+
+        return new TableBackupFile(filename, dbName, tableName, size, createdAt, formatSize(size));
+    }
+
+    public record TableBackupFile(
+            String filename,
+            String database,
+            String table,
             long sizeBytes,
             LocalDateTime createdAt,
             String sizeFormatted
