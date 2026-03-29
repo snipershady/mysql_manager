@@ -417,6 +417,78 @@ Impostare in `/etc/mysql-manager/env` (chmod 600, chown mysqlmgr).
 
 ---
 
+## Gerarchia di configurazione
+
+Quando il JAR viene spostato in una directory isolata dal progetto, Spring Boot carica la configurazione nel seguente ordine di priorità (il più alto vince):
+
+### 1. Variabili d'ambiente (priorità massima)
+
+Spring Boot mappa automaticamente le variabili d'ambiente alle properties, convertendo il nome in maiuscolo e sostituendo `.` con `_`.
+
+Esempi:
+
+| Variabile d'ambiente | Property equivalente |
+|---|---|
+| `SPRING_DATASOURCE_PASSWORD` | `spring.datasource.password` |
+| `MYSQL_MANAGER_PASSWORD` | `mysql.manager.password` |
+
+In produzione con systemd, vengono caricate da `/etc/mysql-manager/env` tramite `EnvironmentFile=` nel file di servizio.
+
+Per un avvio manuale:
+
+```bash
+SPRING_DATASOURCE_PASSWORD=xxx \
+MYSQL_MANAGER_PASSWORD=yyy \
+java -jar /qualsiasi/path/mysql-manager.jar --spring.profiles.active=prod
+```
+
+### 2. Argomenti da riga di comando (priorità alta)
+
+```bash
+java -jar mysql-manager.jar \
+  --spring.datasource.password=xxx \
+  --mysql.manager.password=yyy
+```
+
+### 3. File di configurazione esterni (priorità media)
+
+Spring Boot cerca automaticamente questi file nella **directory di lavoro** al momento dell'avvio (quella in cui si esegue il comando `java -jar`), anche se il JAR si trova altrove:
+
+- `./application.properties`
+- `./config/application.properties`
+
+In alternativa è possibile indicare un percorso esplicito:
+
+```bash
+java -jar mysql-manager.jar \
+  --spring.config.additional-location=/etc/mysql-manager/app.properties
+```
+
+### 4. Configurazione embedded nel JAR (priorità bassa)
+
+I file `application.properties` e `application-prod.properties` sono inclusi nel JAR al momento della build e fungono da valori di default. Non richiedono nessun file esterno, ma **non sono adatti alla produzione** perché contengono le credenziali in chiaro.
+
+Il profilo `prod` viene attivato con `--spring.profiles.active=prod` e sovrascrive alcune properties (cache Thymeleaf, log level) senza ridefinire le password.
+
+---
+
+### Riepilogo: cosa serve a runtime
+
+Il JAR è completamente autonomo. Per avviarlo in qualsiasi directory è sufficiente fornire le credenziali tramite variabili d'ambiente o argomenti:
+
+```bash
+# Minimo indispensabile
+java -jar /opt/mysql-manager/mysql-manager.jar \
+  --spring.datasource.username=mysql_manager_user \
+  --spring.datasource.password=SceglieUnaPasswordSicura! \
+  --mysql.manager.password=TuaPasswordRoot \
+  --spring.profiles.active=prod
+```
+
+Non è necessario che il file `application.properties` del progetto sorgente sia presente nella stessa directory del JAR.
+
+---
+
 ## Licenza
 
 MIT
