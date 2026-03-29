@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/base :: head('Importa Tabella')}"></head>
+<body>
+<nav th:replace="~{layout/base :: navbar}"></nav>
+<main class="container">
+    <div class="page-header">
+        <div>
+            <a th:href="@{/db}" class="breadcrumb">Database</a> /
+            <a th:href="@{/db/{db}(db=${database})}" class="breadcrumb" th:text="${database}">database</a> /
+            <h1>Importa Tabella</h1>
+        </div>
+        <a th:href="@{/db/{db}(db=${database})}" class="btn btn-secondary">&#8592; Torna al database</a>
+    </div>
+
+    <div th:replace="~{layout/base :: alerts}"></div>
+
+    <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+        Seleziona un dump di tabella da importare nel database <strong th:text="${database}">database</strong>.
+        La tabella sarà creata (o sovrascritta se già esistente) con tutti i suoi dati.
+        I dump vengono prodotti con il pulsante <em>Esporta</em> nella lista tabelle di qualsiasi database.
+    </p>
+
+    <table class="table" th:if="${tableDumps != null and !tableDumps.isEmpty()}">
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Database di origine</th>
+                <th>Tabella</th>
+                <th>Data</th>
+                <th>Dimensione</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="d : ${tableDumps}">
+                <td><code th:text="${d.filename()}">file.sql.gz</code></td>
+                <td th:text="${d.database()}">db</td>
+                <td><strong th:text="${d.table()}">tabella</strong></td>
+                <td th:text="${#temporals.format(d.createdAt(), 'dd/MM/yyyy HH:mm:ss')}">data</td>
+                <td th:text="${d.sizeFormatted()}">size</td>
+                <td>
+                    <form th:action="@{/db/{db}/import-table(db=${database})}" method="post" style="display:inline"
+                          class="import-table-form"
+                          th:data-table="${d.table()}"
+                          th:data-database="${database}">
+                        <input type="hidden" name="filename" th:value="${d.filename()}"/>
+                        <button type="submit" class="btn btn-sm btn-primary">&#128229; Importa</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p th:if="${tableDumps == null or tableDumps.isEmpty()}" class="empty-state">
+        Nessun dump di tabella trovato. Usa il pulsante <em>Esporta</em> sulla riga di una tabella per crearne uno.
+    </p>
+
+    <script>
+        document.querySelectorAll('.import-table-form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                var table = this.dataset.table;
+                var db = this.dataset.database;
+                if (!confirmAction(this, "Importare la tabella '" + table + "' nel database '" + db + "'? Se esiste già verrà sovrascritta con tutti i suoi dati.")) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+</main>
+</body>
+</html>

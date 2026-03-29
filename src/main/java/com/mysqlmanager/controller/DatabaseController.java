@@ -146,6 +146,58 @@ public class DatabaseController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{database}/table/{table}/backup")
+    public String backupTable(@PathVariable String database,
+                               @PathVariable String table,
+                               Authentication auth,
+                               HttpServletRequest request,
+                               RedirectAttributes redirectAttrs) {
+        try {
+            String filePath = backupService.backupTable(database, table);
+            auditService.log(auth.getName(), request.getRemoteAddr(), database,
+                    "BACKUP TABLE `" + database + "`.`" + table + "`", 0, true, null);
+            redirectAttrs.addFlashAttribute("success", "Export tabella '" + table + "' completato: " + filePath);
+        } catch (Exception e) {
+            auditService.log(auth.getName(), request.getRemoteAddr(), database,
+                    "BACKUP TABLE `" + database + "`.`" + table + "`", 0, false, e.getMessage());
+            redirectAttrs.addFlashAttribute("error", "Export fallito: " + e.getMessage());
+        }
+        return "redirect:/db/" + database;
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{database}/table-imports")
+    public String listTableImports(@PathVariable String database, Model model) {
+        try {
+            model.addAttribute("database", database);
+            model.addAttribute("tableDumps", backupService.listTableBackups());
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+        }
+        return "db/table-imports";
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{database}/import-table")
+    public String importTable(@PathVariable String database,
+                               @RequestParam String filename,
+                               Authentication auth,
+                               HttpServletRequest request,
+                               RedirectAttributes redirectAttrs) {
+        try {
+            backupService.restoreTable(database, filename);
+            auditService.log(auth.getName(), request.getRemoteAddr(), database,
+                    "IMPORT TABLE INTO `" + database + "` FROM " + filename, 0, true, null);
+            redirectAttrs.addFlashAttribute("success", "Tabella importata con successo da '" + filename + "' nel database '" + database + "'");
+        } catch (Exception e) {
+            auditService.log(auth.getName(), request.getRemoteAddr(), database,
+                    "IMPORT TABLE INTO `" + database + "` FROM " + filename, 0, false, e.getMessage());
+            redirectAttrs.addFlashAttribute("error", "Import fallito: " + e.getMessage());
+        }
+        return "redirect:/db/" + database + "/table-imports";
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{database}/drop")
     public String dropDatabase(@PathVariable String database,
                                 Authentication auth,
