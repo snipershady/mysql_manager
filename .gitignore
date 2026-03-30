@@ -38,3 +38,5 @@ logs/
 # Claude Code (metadati interni, non utili al progetto)
 .claude/
 CLAUDE.md
+
+GEMINI.md
